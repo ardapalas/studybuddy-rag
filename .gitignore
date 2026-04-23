@@ -205,3 +205,14 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project-specific
+.DS_Store
+
+# User-uploaded data (never commit PDFs)
+data/uploads/*
+!data/uploads/.gitkeep
+
+# ChromaDB persistent storage (regenerated from PDFs)
+data/chroma/*
+!data/chroma/.gitkeep
