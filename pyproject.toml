@@ -1,0 +1,48 @@
+[project]
+name = "studybuddy-rag"
+version = "0.1.0"
+description = "Turkish RAG assistant for university lecture notes"
+requires-python = ">=3.11"
+dependencies = [
+    # Core RAG (v0.3.x - stable, uyumlu tutorial çokluğu)
+    "langchain>=0.3.20,<1.0",
+    "langchain-community>=0.3.20,<1.0",
+    "langchain-core>=0.3.50,<1.0",
+    "langchain-chroma>=0.1.4,<1.0",
+    "langchain-huggingface>=0.1.2,<1.0",
+    "langchain-groq>=0.2.3,<1.0",
+    "langchain-text-splitters>=0.3.0,<1.0",
+    "chromadb>=0.5.0,<2.0",
+
+    # Embeddings
+    "sentence-transformers>=3.0.0,<5.0",
+
+    # Document parsing
+    "pypdf>=5.0.0",
+    "pdfplumber>=0.11.0",
+
+    # UI
+    "streamlit>=1.38.0",
+
+    # Utilities
+    "python-dotenv>=1.0.0",
+    "tqdm>=4.66.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+    "ipykernel>=6.29.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
