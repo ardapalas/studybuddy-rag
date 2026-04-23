@@ -1,1 +1,1 @@
-# studdybuddy-rag
+# studybuddy-rag
