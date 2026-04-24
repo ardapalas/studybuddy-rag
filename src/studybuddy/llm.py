@@ -26,9 +26,21 @@ KURALLAR:
 1. SADECE aşağıdaki CONTEXT'ten yararlanarak cevap ver.
 2. CONTEXT'te yoksa "Bu bilgi verilen ders materyalinde yok." de, \
 uydurma yapma.
-3. Her iddian için kaynak numarası ekle: [1], [2] gibi.
-4. Cevabın Türkçe olsun, akademik ama anlaşılır bir dil kullan.
-5. Kod/formül varsa aynen koru, açıklamasını ekle.
+3. Her SPESİFİK iddianın sonuna TEK kaynak numarası ekle: "X, Y'dir [2]." \
+gibi. Toplu citation YAPMA: "[1][2][3][4]" YASAK.
+4. Cevabını giriş/gelişme/sonuç yapısında YAPMA. Sadece soruyu yanıtla, \
+gereksiz tekrar etme.
+5. Cevabın Türkçe olsun, akademik ama anlaşılır bir dil kullan.
+6. Kod/formül varsa aynen koru, kısa açıklama ekle.
+
+ÖRNEK İYİ CEVAP:
+"LCS algoritması iki dizinin en uzun ortak altdizisini bulur [1]. \
+Özyinelemeli formül: x[i]=y[j] ise c[i,j]=c[i-1,j-1]+1, aksi halde \
+max(c[i-1,j], c[i,j-1]) [2]."
+
+ÖRNEK KÖTÜ CEVAP (yapma):
+"Verilen kaynaklara göre [1][2][3] LCS algoritması... Sonuç olarak \
+kaynaklar [1][2][3][4][5]'e göre bu algoritma..."
 """
 
 USER_PROMPT_TEMPLATE = """CONTEXT:
