@@ -41,28 +41,40 @@ Asking *"basit bir python kodu yaz"* (no algorithm name) produces a working Pyth
 
 This is a genuine limitation, not a bug. The fix is a post-generation LLM-as-judge step (see [Known Limitations §1](#1-cross-language-hallucination-survives-broad-prompts) below).
 
----
 
 ## Architecture
-┌──────────────────────────────────────────────────────────────┐
-│                     Streamlit UI (app.py)                    │
-│  ┌──────────────┐      ┌──────────────┐    ┌─────────────┐  │
-│  │ PDF Upload   │      │ Chat Window  │    │  Sources    │  │
-│  └──────┬───────┘      └──────┬───────┘    └─────────────┘  │
-└─────────┼─────────────────────┼──────────────────────────────┘
-│                     │
-▼                     ▼
-┌──────────────────┐   ┌──────────────────────────────────────┐
-│  ingestion.py    │   │  retrieval.py  →  llm.py             │
-│  PDF → chunks    │   │  query → top-k chunks → LLM → answer │
-│  → embeddings    │   └────────────┬─────────────────────────┘
-└─────────┬────────┘                │
-│                         │
-▼                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  ChromaDB (persistent, session-scoped collections)           │
-└──────────────────────────────────────────────────────────────┘
 
+```mermaid
+flowchart TB
+    subgraph UI["Streamlit UI (app.py)"]
+        Upload[PDF Upload]
+        Chat[Chat Window]
+        Sources[Expandable Sources]
+    end
+
+    subgraph Offline["Offline: Ingestion"]
+        direction LR
+        PDF[PDF File] --> Loader[PyPDFLoader]
+        Loader --> Splitter["RecursiveCharacterTextSplitter<br/>chunk_size=500, overlap=100"]
+        Splitter --> EmbedDocs["multilingual-e5-small<br/>+ 'passage:' prefix"]
+    end
+
+    subgraph Online["Online: Retrieval + Generation"]
+        direction LR
+        Query[User Question] --> EmbedQuery["multilingual-e5-small<br/>+ 'query:' prefix"]
+        EmbedQuery --> Search["Cosine Similarity<br/>top-k=5"]
+        Search --> LLM["Groq Llama 3.3 70B<br/>+ system prompt"]
+        LLM --> Answer["Turkish Answer<br/>with citations"]
+    end
+
+    DB[("ChromaDB<br/>session-scoped collections")]
+
+    Upload --> Offline
+    EmbedDocs --> DB
+    Chat --> Online
+    DB --> Search
+    Online --> Sources
+```
 
 ### Request lifecycle
 
@@ -78,7 +90,6 @@ This is a genuine limitation, not a bug. The fix is a post-generation LLM-as-jud
 4. **Session isolation:**
    Each browser session gets a unique ChromaDB collection name (`session_<uuid>`). Users never see each other's uploads, and multiple PDFs can be tested per session by clicking "Yeni PDF yükle".
 
----
 
 ## Design Decisions
 
@@ -167,49 +178,53 @@ Retrieval quality is currently judged by eye. A 20–30 question ground-truth se
 
 ## Project Structure
 
-studybuddy-rag/
-├── app.py                      # Streamlit UI (multi-session chat)
-├── pyproject.toml              # uv-managed dependencies
-├── src/
-│   └── studybuddy/
-│       ├── config.py           # Env vars, paths, hyperparameters
-│       ├── ingestion.py        # PDF → chunks → embeddings → ChromaDB
-│       ├── retrieval.py        # Query → top-k chunks (structured)
-│       └── llm.py              # Groq wrapper + prompt + answer formatter
-├── scripts/
-│   └── test_retrieval.py       # Debug script for manual retrieval inspection
-├── data/
-│   ├── uploads/<session>/      # User PDFs (gitignored)
-│   └── chroma/                 # Persistent vector store (gitignored)
-└── docs/                       # Screenshots, architecture diagrams
-
----
+| Path | Purpose |
+|------|---------|
+| `app.py` | Streamlit UI — multi-session chat interface with PDF upload |
+| `src/studybuddy/config.py` | Environment variables, paths, hyperparameters (chunk size, top-k, temperature) |
+| `src/studybuddy/ingestion.py` | PDF → chunks → embeddings → ChromaDB pipeline |
+| `src/studybuddy/retrieval.py` | Query → top-k chunks with metadata (dataclass-based) |
+| `src/studybuddy/llm.py` | Groq wrapper + prompt template + answer formatting |
+| `scripts/test_retrieval.py` | Debug script for manual retrieval inspection |
+| `data/uploads/<session>/` | User-uploaded PDFs (gitignored, session-scoped) |
+| `data/chroma/` | Persistent ChromaDB storage (gitignored) |
+| `docs/` | Screenshots and architecture artifacts |
+| `pyproject.toml` | uv-managed dependencies (LangChain, ChromaDB, Streamlit, etc.) |
 
 ## Setup
 
 Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
+**Clone**
+
 ```bash
-# Clone
 git clone https://github.com/ardapalas/studybuddy-rag.git
 cd studybuddy-rag
+```
 
-# Environment
+**Environment**
+
+```bash
 uv venv
 source .venv/bin/activate
 uv sync
+```
 
-# Configure
+**Configure**
+
+```bash
 cp .env.example .env
-# Add your Groq API key to .env (free tier at https://console.groq.com)
+```
 
-# Run
+Then add your Groq API key to `.env` (free tier at https://console.groq.com).
+
+**Run**
+
+```bash
 streamlit run app.py
 ```
 
 First launch downloads the multilingual-e5 embedding model (~470 MB, one-time).
-
----
 
 ## Testing Notes
 
